@@ -4,6 +4,7 @@ import std.time.DateTime
 import net.http.ClientBuilder
 import std.io.StringReader
 import ollama4cj.exceptions.OllamaBaseException
+import ollama4cj.utils.HttpUtils
 
 public class OllamaGenerateEndpointCaller <: OllamaEndpointCaller {
 
@@ -39,25 +40,18 @@ public class OllamaGenerateEndpointCaller <: OllamaEndpointCaller {
         let startTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
         let url = host + getEndpointSuffix()
         let req = getRequestBuilderDefault(url).body(body.toJson()).post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode == 200) {
-            let jsonStr = StringReader(resp.body).readToEnd()
-            cli.close()
-            let model = OllamaGenerateResponseModel.fromJson(jsonStr)
+            let model = OllamaGenerateResponseModel.fromJson(respBody)
             let endTime = DateTime.now().toUnixTimeStamp().toMilliseconds()
             return OllamaResult(response: model.response, responseTime: (endTime - startTime), httpStatusCode: Int64(statusCode))
         }
         if (statusCode == 404 || statusCode == 400) {
-            let err = OllamaErrorResponse.fromJson(StringReader(resp.body).readToEnd())
-            cli.close()
+            let err = OllamaErrorResponse.fromJson(respBody)
             throw OllamaBaseException(err.error)
         } else if (statusCode == 401) {
-            cli.close()
             throw OllamaBaseException("Unauthorized")
         } else {
-            cli.close()
             throw OllamaBaseException("Exception with status: ${statusCode}")
         }
 

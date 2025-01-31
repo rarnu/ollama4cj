@@ -8,9 +8,8 @@ import std.fs.File
 import ollama4cj.utils.Utils
 import net.http.HttpRequestBuilder
 import encoding.base64.toBase64String
-import net.http.ClientBuilder
-import std.io.StringReader
 import ollama4cj.exceptions.OllamaBaseException
+import ollama4cj.utils.HttpUtils
 
 public class OllamaAPI {
 
@@ -25,21 +24,12 @@ public class OllamaAPI {
         basicAuth = BasicAuth(username: username, password: password)
     }
 
-    // TODO: ping
-
-    // TODO: ps
-
-
     // listModels
 
     public func listModels(): ArrayList<Model> {
         let url = host + "/api/tags"
         let req = getRequestBuilderDefault(url).header("Accept", "application/json").get().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
-        cli.close()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode == 200) {
             return ListModelsResponse.fromJson(respBody).models
         } else {
@@ -51,11 +41,7 @@ public class OllamaAPI {
     public func pullModel(modelName: String) {
         let url = host + "/api/pull"
         let req = getRequestBuilderDefault(url).body(ModelRequest(modelName).toJson()).header("Accept", "application/json").post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
-        cli.close()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode != 200) {
             throw OllamaBaseException("${statusCode} - ${respBody}")
         }
@@ -65,10 +51,7 @@ public class OllamaAPI {
     public func getModelDetails(modelName: String): ModelDetail {
         let url = host + "/api/show"
         let req = getRequestBuilderDefault(url).body(ModelRequest(modelName).toJson()).header("Accept", "application/json").post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode == 200) {
             return ModelDetail.fromJson(respBody)
         } else {
@@ -80,11 +63,7 @@ public class OllamaAPI {
     public func createModelWithFilePath(modelName: String, modelFilePath: String) {
         let url = host + "/api/create"
         let req = getRequestBuilderDefault(url).body(CustomModelFilePathRequest(modelName, modelFilePath).toJson()).header("Accept", "application/json").post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
-        cli.close()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode != 200) {
             throw OllamaBaseException("${statusCode} - ${respBody}")
         }
@@ -97,11 +76,7 @@ public class OllamaAPI {
     public func createModelWithModelFileContents(modelName: String, modelFileContents: String) {
         let url = host + "/api/create"
         let req = getRequestBuilderDefault(url).body(CustomModelFileContentsRequest(modelName, modelFileContents).toJson()).header("Accept", "application/json").post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
-        cli.close()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode != 200) {
             throw OllamaBaseException("${statusCode} - ${respBody}")
         }
@@ -114,11 +89,7 @@ public class OllamaAPI {
     public func deleteModel(modelName: String) {
         let url = host + "/api/delete"
         let req = getRequestBuilderDefault(url).body(ModelRequest(modelName).toJson()).header("Accept", "application/json").delete().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
-        let respBody = StringReader(resp.body).readToEnd()
-        cli.close()
+        let (statusCode, respBody) = HttpUtils.call(req)
         if (statusCode == 404 && respBody.contains("model") && respBody.contains("not found")) {
             return
         }

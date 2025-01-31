@@ -3,6 +3,7 @@ package ollama4cj.models
 import net.http.ClientBuilder
 import std.io.StringReader
 import ollama4cj.exceptions.OllamaBaseException
+import ollama4cj.utils.HttpUtils
 
 public class OllamaChatEndpointCaller <: OllamaEndpointCaller {
 
@@ -40,25 +41,19 @@ public class OllamaChatEndpointCaller <: OllamaEndpointCaller {
     public func callSync(body: OllamaChatRequest): OllamaChatResult {
         let url = host + getEndpointSuffix()
         let req = getRequestBuilderDefault(url).body(body.toJson()).post().build()
-        let cli = ClientBuilder().build()
-        let resp = cli.send(req)
-        let statusCode = resp.status
+        let (statusCode, respBody) = HttpUtils.call(req)
+        
         if (statusCode == 200) {
-            let jsonStr = StringReader(resp.body).readToEnd()
-            cli.close()
-            let model = OllamaChatResponseModel.fromJson(jsonStr)
+            let model = OllamaChatResponseModel.fromJson(respBody)
             let history = body.messages
             return OllamaChatResult(responseModel: model, chatHistory: history)
         } 
         if (statusCode == 404 || statusCode == 400) {
-            let err = OllamaErrorResponse.fromJson(StringReader(resp.body).readToEnd())
-            cli.close()
+            let err = OllamaErrorResponse.fromJson(respBody)
             throw OllamaBaseException(err.error)
         } else if (statusCode == 401) {
-            cli.close()
             throw OllamaBaseException("Unauthorized")
         } else {
-            cli.close()
             throw OllamaBaseException("Exception with status: ${statusCode}")
         }
     }

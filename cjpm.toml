@@ -1,0 +1,14 @@
+[dependencies]
+
+[package]
+  cjc-version = "0.58.3"
+  compile-option = ""
+  description = "Ollama4cj"
+  link-option = ""
+  name = "ollama4cj"
+  output-type = "executable"
+  override-compile-option = ""
+  src-dir = ""
+  target-dir = ""
+  version = "0.1.0"
+  package-configuration = {}

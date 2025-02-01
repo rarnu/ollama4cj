@@ -4,6 +4,7 @@ import net.http.ClientBuilder
 import std.fs.File
 import std.fs.OpenMode
 import encoding.base64.toBase64String
+import std.io.ByteBuffer
 
 public class Utils {
 
